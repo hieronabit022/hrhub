@@ -41,7 +41,14 @@ android {
     signingConfigs {
         if (keyPropertiesFile.exists()) {
             create("release") {
-                storeFile = file(keyProperties["storeFile"] as String)
+                val configuredStoreFile = keyProperties["storeFile"] as String
+                storeFile = rootProject.file(
+                    if (configuredStoreFile.startsWith("app/")) {
+                        configuredStoreFile
+                    } else {
+                        "app/$configuredStoreFile"
+                    }
+                )
                 storePassword = keyProperties["storePassword"] as String
                 keyAlias = keyProperties["keyAlias"] as String
                 keyPassword = keyProperties["keyPassword"] as String
