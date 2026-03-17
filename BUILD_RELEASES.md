@@ -87,7 +87,7 @@ Use this as a starting point and adjust team id, bundle id, and method:
   <string>YOUR_TEAM_ID</string>
   <key>provisioningProfiles</key>
   <dict>
-    <key>com.example.workpulse</key>
+    <key>com.beta.workpulse</key>
     <string>YOUR_PROFILE_NAME</string>
   </dict>
 </dict>
@@ -107,6 +107,6 @@ All outputs are uploaded as GitHub Actions artifacts.
 
 ## 6. Important notes
 
-- Current Android package id is still `com.example.workpulse`
+- Current Android package id is `com.beta.workpulse`
 - Current iOS bundle id also needs to match your Apple signing setup
 - iOS build still requires valid Apple certificate and provisioning profile, even if built in GitHub Actions

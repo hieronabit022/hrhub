@@ -1,4 +1,4 @@
-package com.example.workpulse
+package com.beta.workpulse
 
 import io.flutter.embedding.android.FlutterActivity
 
