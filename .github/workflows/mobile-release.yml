@@ -1,0 +1,121 @@
+name: Mobile Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - android
+          - ios
+      build_name:
+        description: App version name
+        required: false
+        default: 1.0.0
+      build_number:
+        description: App build number
+        required: false
+        default: "1"
+
+jobs:
+  android:
+    if: ${{ inputs.platform == 'both' || inputs.platform == 'android' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Prepare Android signing
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        shell: bash
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          cat <<EOF > android/key.properties
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=app/upload-keystore.jks
+          EOF
+
+      - name: Build Android APK
+        run: flutter build apk --release --build-name="${{ inputs.build_name }}" --build-number="${{ inputs.build_number }}"
+
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release --build-name="${{ inputs.build_name }}" --build-number="${{ inputs.build_number }}"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: workpulse-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: workpulse-android-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+
+  ios:
+    if: ${{ (inputs.platform == 'both' || inputs.platform == 'ios') && secrets.IOS_P12_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_EXPORT_OPTIONS_PLIST_BASE64 != '' }}
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Decode signing files
+        shell: bash
+        run: |
+          echo "${{ secrets.IOS_P12_BASE64 }}" | base64 --decode > ios_certificate.p12
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > workpulse.mobileprovision
+          echo "${{ secrets.IOS_EXPORT_OPTIONS_PLIST_BASE64 }}" | base64 --decode > ios/ExportOptions.plist
+
+      - name: Import certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_P12_PASSWORD }}
+
+      - name: Install provisioning profile
+        shell: bash
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp workpulse.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build iOS IPA
+        run: flutter build ipa --release --build-name="${{ inputs.build_name }}" --build-number="${{ inputs.build_number }}" --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: workpulse-ios-ipa
+          path: build/ios/ipa/*.ipa

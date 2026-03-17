@@ -1,0 +1,45 @@
+# HRHub Implementation TODO
+
+- [ ] Update dependencies in `pubspec.yaml`
+- [ ] Create scalable folder architecture:
+  - [ ] `lib/domain` (models/contracts)
+  - [ ] `lib/data` (mock repositories/services/seed)
+  - [ ] `lib/application` (controllers/state)
+  - [ ] `lib/presentation` (screens/widgets/theme/router)
+- [ ] Add rich deterministic mock seed data for all required entities
+- [ ] Implement in-memory repositories and service abstractions
+- [ ] Implement Authentication (OTP request/verify/session persistence)
+- [ ] Implement Home Dashboard (header, news/announcement slider, quick menu)
+- [ ] Implement All Menu page with required menu items and logout at bottom
+- [ ] Implement Settings page (Light/Dark switch only)
+- [ ] Implement Attendance module:
+  - [ ] Home card (time/date/swipe/check in-out/WFO-WFA)
+  - [ ] Attendance page tabs (Summary/History/Correction)
+  - [ ] Attendance detail full page
+  - [ ] Correction CRUD-like flow
+- [ ] Implement Requests module:
+  - [ ] My Requests list/detail/create/cancel
+  - [ ] Request types: Leave/Permission/WFA/Medical Claim
+  - [ ] Medical Claim attachments (1-6 images, upload states, retry/remove/reorder, preview)
+- [ ] Implement Approvals module (list/detail/accept/reject/notes)
+- [ ] Implement Profile module:
+  - [ ] Tabs: Personal/Employment/Contact
+  - [ ] Edit Personal + Contact
+- [ ] Implement News module:
+  - [ ] List (latest 10)
+  - [ ] Detail article flow with like/comments below content
+  - [ ] Single own comment create + inline edit/delete
+- [ ] Implement Announcements module:
+  - [ ] List (latest 5)
+  - [ ] Detail with like/comments and own comment inline edit/delete
+- [ ] Implement Life Events module:
+  - [ ] List/detail with categories (birthday/marriage/birth/condolence)
+  - [ ] like/comments with own comment inline edit/delete
+- [ ] Implement Notifications inbox:
+  - [ ] In-app mock notifications
+  - [ ] mark as read
+  - [ ] deep-link navigation handling
+- [ ] Ensure compact polished UI (mobile-first, no overflow, reusable components)
+- [ ] Add tests (unit + widget) for required save/edit/delete/interactions/UI renders
+- [ ] Run `flutter test` and ensure all tests pass
+- [ ] Update TODO progress checklist
