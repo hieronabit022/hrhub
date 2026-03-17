@@ -132,14 +132,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: auth.loading
                             ? null
                             : () async {
+                                final phone = phoneController.text.trim();
                                 if (!otpRequested) {
-                                  await auth.requestOtp(phoneController.text);
-                                  setState(() {
-                                    otpRequested = true;
-                                    errorText = null;
-                                  });
+                                  if (phone.isEmpty) {
+                                    setState(() {
+                                      errorText = 'Enter your mobile number first';
+                                    });
+                                    return;
+                                  }
+                                  try {
+                                    await auth.requestOtp(phone);
+                                    setState(() {
+                                      otpRequested = true;
+                                      errorText = null;
+                                    });
+                                  } catch (_) {
+                                    setState(() {
+                                      errorText = 'Mobile number was not found or the server could not be reached';
+                                    });
+                                  }
                                 } else {
-                                  final ok = await auth.verifyOtp(otpController.text);
+                                  final ok = await auth.verifyOtp(otpController.text.trim());
                                   if (!context.mounted) return;
                                   if (!ok) {
                                     setState(() => errorText = 'Invalid verification code');
