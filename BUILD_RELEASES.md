@@ -32,6 +32,11 @@ The workflow will create:
 - `android/app/upload-keystore.jks`
 - `android/key.properties`
 
+The generated `key.properties` points to:
+- `storeFile=upload-keystore.jks`
+
+This is correct because Gradle resolves it from the `android/app` module folder.
+
 ### Encode keystore to base64 on Windows PowerShell
 
 ```powershell
