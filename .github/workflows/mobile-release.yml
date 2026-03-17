@@ -46,14 +46,19 @@ jobs:
         run: flutter pub get
 
       - name: Prepare Android signing
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         shell: bash
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
           cat <<EOF > android/key.properties
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
           storeFile=app/upload-keystore.jks
           EOF
 
@@ -76,7 +81,7 @@ jobs:
           path: build/app/outputs/bundle/release/app-release.aab
 
   ios:
-    if: ${{ (inputs.platform == 'both' || inputs.platform == 'ios') && secrets.IOS_P12_BASE64 != '' && secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' && secrets.IOS_EXPORT_OPTIONS_PLIST_BASE64 != '' }}
+    if: ${{ inputs.platform == 'both' || inputs.platform == 'ios' }}
     runs-on: macos-latest
 
     steps:
@@ -92,12 +97,28 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Decode signing files
+      - name: Check iOS signing secrets
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_EXPORT_OPTIONS_PLIST_BASE64: ${{ secrets.IOS_EXPORT_OPTIONS_PLIST_BASE64 }}
         shell: bash
         run: |
-          echo "${{ secrets.IOS_P12_BASE64 }}" | base64 --decode > ios_certificate.p12
-          echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > workpulse.mobileprovision
-          echo "${{ secrets.IOS_EXPORT_OPTIONS_PLIST_BASE64 }}" | base64 --decode > ios/ExportOptions.plist
+          if [ -z "$IOS_P12_BASE64" ] || [ -z "$IOS_PROVISIONING_PROFILE_BASE64" ] || [ -z "$IOS_EXPORT_OPTIONS_PLIST_BASE64" ]; then
+            echo "Missing iOS signing secrets."
+            exit 1
+          fi
+
+      - name: Decode signing files
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_EXPORT_OPTIONS_PLIST_BASE64: ${{ secrets.IOS_EXPORT_OPTIONS_PLIST_BASE64 }}
+        shell: bash
+        run: |
+          echo "$IOS_P12_BASE64" | base64 --decode > ios_certificate.p12
+          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > workpulse.mobileprovision
+          echo "$IOS_EXPORT_OPTIONS_PLIST_BASE64" | base64 --decode > ios/ExportOptions.plist
 
       - name: Import certificate
         uses: apple-actions/import-codesign-certs@v3
