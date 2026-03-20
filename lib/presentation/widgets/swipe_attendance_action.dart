@@ -2,9 +2,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../domain/models/entities.dart';
+
 class SwipeAttendanceAction extends StatefulWidget {
   final bool checkedIn;
-  final Future<void> Function() onClockIn;
+  final Future<void> Function([AttendanceWorkMode? mode]) onClockIn;
   final Future<void> Function() onClockOut;
   final Future<bool> Function()? isWithinOfficeRadius;
 
@@ -56,9 +58,9 @@ class _SwipeAttendanceActionState extends State<SwipeAttendanceAction> {
     );
   }
 
-  Future<String?> _showRemoteWorkDialog() async {
+  Future<AttendanceWorkMode?> _showRemoteWorkDialog() async {
     if (!mounted) return null;
-    return showDialog<String>(
+    return showDialog<AttendanceWorkMode>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Choose attendance type'),
@@ -71,11 +73,11 @@ class _SwipeAttendanceActionState extends State<SwipeAttendanceAction> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, 'Business Trip'),
+            onPressed: () => Navigator.pop(context, AttendanceWorkMode.businessTrip),
             child: const Text('Business Trip'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, 'WFA'),
+            onPressed: () => Navigator.pop(context, AttendanceWorkMode.wfa),
             child: const Text('WFA'),
           ),
         ],
@@ -120,7 +122,7 @@ class _SwipeAttendanceActionState extends State<SwipeAttendanceAction> {
           }
 
           setState(() => _submitting = true);
-          String? attendanceType;
+          AttendanceWorkMode? attendanceType;
           try {
             if (clockIn && widget.isWithinOfficeRadius != null) {
               final inOffice = await widget.isWithinOfficeRadius!.call();
@@ -139,7 +141,7 @@ class _SwipeAttendanceActionState extends State<SwipeAttendanceAction> {
             }
 
             if (clockIn) {
-              await widget.onClockIn();
+              await widget.onClockIn(attendanceType);
             } else {
               await widget.onClockOut();
             }
@@ -147,17 +149,19 @@ class _SwipeAttendanceActionState extends State<SwipeAttendanceAction> {
             final message = clockIn
                 ? (attendanceType == null
                     ? 'Your clock in was recorded successfully.'
-                    : 'Your clock in was recorded as $attendanceType.')
+                    : 'Your clock in was recorded as ${attendanceType == AttendanceWorkMode.wfa ? 'WFA' : 'Business Trip'}.')
                 : 'Your clock out was recorded successfully.';
             await _showStatusDialog(
               title: clockIn ? 'Clock In Success' : 'Clock Out Success',
               message: message,
               success: true,
             );
-          } catch (_) {
+          } catch (error) {
             await _showStatusDialog(
               title: clockIn ? 'Clock In Failed' : 'Clock Out Failed',
-              message: 'Something went wrong while saving your attendance. Please try again.',
+              message: error is StateError
+                  ? error.message?.toString() ?? 'Something went wrong while saving your attendance.'
+                  : 'Something went wrong while saving your attendance. Please try again.',
               success: false,
             );
           } finally {

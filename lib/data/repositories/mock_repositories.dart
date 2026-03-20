@@ -143,12 +143,14 @@ class InMemoryAttendanceRepository implements AttendanceRepository {
     String employeeId,
     AttendanceType type,
     DateTime timestamp,
+    AttendanceWorkMode workMode,
   ) async {
     final record = AttendanceRecord(
       id: _uuid.v4(),
       employeeId: employeeId,
       timestamp: timestamp,
       type: type,
+      workMode: workMode,
     );
     _history.insert(0, record);
     return record;

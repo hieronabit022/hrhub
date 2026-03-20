@@ -24,6 +24,7 @@ abstract class AttendanceRepository {
     String employeeId,
     AttendanceType type,
     DateTime timestamp,
+    AttendanceWorkMode workMode,
   );
   Future<List<AttendanceCorrection>> getCorrections(String employeeId);
   Future<AttendanceCorrection> createCorrection(

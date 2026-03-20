@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../domain/contracts/repositories.dart';
 import '../../domain/models/entities.dart';
@@ -17,8 +18,15 @@ class AttendanceController extends ChangeNotifier {
   List<AttendanceCorrection> corrections = [];
   bool checkedIn = false;
 
-  double currentLat = -6.200000;
-  double currentLng = 106.816666;
+  double? currentLat;
+  double? currentLng;
+  bool locationServiceEnabled = false;
+  bool locationPermissionGranted = false;
+  bool mockLocationDetected = false;
+  bool isLoadingLocation = false;
+  Branch? detectedBranch;
+  Branch? nearestBranch;
+  double? nearestBranchDistanceMeters;
 
   Future<void> load({
     String? employee,
@@ -29,24 +37,43 @@ class AttendanceController extends ChangeNotifier {
     history = await _attendanceRepository.getHistory(employeeId);
     corrections = await _attendanceRepository.getCorrections(employeeId);
     checkedIn = history.isNotEmpty && history.first.type == AttendanceType.checkIn;
+    await refreshLocation(notify: false);
     notifyListeners();
   }
 
   Future<void> swipeCheck() async {
-    final type = checkedIn ? AttendanceType.checkOut : AttendanceType.checkIn;
-    await _attendanceRepository.addRecord(employeeId, type, DateTime.now());
-    await load();
+    if (checkedIn) {
+      await clockOut();
+      return;
+    }
+    await clockIn();
   }
 
-  Future<void> clockIn() async {
+  Future<void> clockIn([AttendanceWorkMode? overrideMode]) async {
     if (checkedIn) return;
-    await _attendanceRepository.addRecord(employeeId, AttendanceType.checkIn, DateTime.now());
+    final snapshot = await refreshLocation();
+    _throwIfLocationBlocked(snapshot);
+    final mode = _resolveWorkMode(snapshot, overrideMode);
+    await _attendanceRepository.addRecord(
+      employeeId,
+      AttendanceType.checkIn,
+      DateTime.now(),
+      mode,
+    );
     await load();
   }
 
   Future<void> clockOut() async {
     if (!checkedIn) return;
-    await _attendanceRepository.addRecord(employeeId, AttendanceType.checkOut, DateTime.now());
+    final snapshot = await refreshLocation();
+    _throwIfLocationBlocked(snapshot);
+    final mode = history.firstOrNull?.workMode ?? _resolveClockOutMode(snapshot);
+    await _attendanceRepository.addRecord(
+      employeeId,
+      AttendanceType.checkOut,
+      DateTime.now(),
+      mode,
+    );
     await load();
   }
 
@@ -65,27 +92,149 @@ class AttendanceController extends ChangeNotifier {
   }
 
   Future<String> wfoWfaLabel() async {
-    final inOffice = await isWithinOfficeRadius();
-    return inOffice ? 'WFO' : 'WFA';
+    final snapshot = await refreshLocation();
+    if (snapshot.mockLocationDetected) return 'Blocked';
+    return snapshot.detectedBranch != null ? 'WFO' : 'WFA';
   }
 
   Future<bool> isWithinOfficeRadius() async {
-    final branches = await _branchRepository.getBranches();
-    Branch? branch;
-    for (final item in branches) {
-      if (item.id == branchId) {
-        branch = item;
-        break;
+    final snapshot = await refreshLocation();
+    return snapshot.detectedBranch != null && !snapshot.mockLocationDetected;
+  }
+
+  Future<AttendanceLocationSnapshot> refreshLocation({bool notify = true}) async {
+    isLoadingLocation = true;
+    if (notify) notifyListeners();
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      locationServiceEnabled = serviceEnabled;
+      if (!serviceEnabled) {
+        locationPermissionGranted = false;
+        mockLocationDetected = false;
+        detectedBranch = null;
+        nearestBranch = null;
+        nearestBranchDistanceMeters = null;
+        return _snapshot();
       }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      locationPermissionGranted = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+
+      if (!locationPermissionGranted) {
+        mockLocationDetected = false;
+        detectedBranch = null;
+        nearestBranch = null;
+        nearestBranchDistanceMeters = null;
+        return _snapshot();
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+        ),
+      );
+
+      currentLat = position.latitude;
+      currentLng = position.longitude;
+      mockLocationDetected = position.isMocked;
+
+      final branches = await _branchRepository.getBranches();
+      Branch? matchedBranch;
+      Branch? closestBranch;
+      double? closestDistance;
+
+      for (final branch in branches) {
+        final distance = _distanceMeters(
+          position.latitude,
+          position.longitude,
+          branch.latitude,
+          branch.longitude,
+        );
+
+        if (closestDistance == null || distance < closestDistance) {
+          closestDistance = distance;
+          closestBranch = branch;
+        }
+
+        if (distance <= branch.radiusMeters) {
+          matchedBranch = branch;
+          break;
+        }
+      }
+
+      detectedBranch = matchedBranch;
+      nearestBranch = closestBranch;
+      nearestBranchDistanceMeters = closestDistance;
+      return _snapshot();
+    } finally {
+      isLoadingLocation = false;
+      if (notify) notifyListeners();
     }
-    if (branch == null) return false;
-    final dist = _distanceMeters(
-      currentLat,
-      currentLng,
-      branch.latitude,
-      branch.longitude,
+  }
+
+  String get locationStatusLabel {
+    if (isLoadingLocation) return 'Checking location...';
+    if (!locationServiceEnabled) return 'Location service is off';
+    if (!locationPermissionGranted) return 'Location permission required';
+    if (mockLocationDetected) return 'Mock location detected';
+    if (detectedBranch != null) return 'Office area detected';
+    if (nearestBranch != null) return 'Outside all branch areas';
+    return 'Location unavailable';
+  }
+
+  String? get locationStatusDetail {
+    if (detectedBranch != null) {
+      return 'Detected in ${detectedBranch!.name}';
+    }
+    if (nearestBranch != null && nearestBranchDistanceMeters != null) {
+      final distance = nearestBranchDistanceMeters!.round();
+      return 'Nearest branch: ${nearestBranch!.name} ($distance m)';
+    }
+    return null;
+  }
+
+  AttendanceLocationSnapshot _snapshot() {
+    return AttendanceLocationSnapshot(
+      locationServiceEnabled: locationServiceEnabled,
+      locationPermissionGranted: locationPermissionGranted,
+      mockLocationDetected: mockLocationDetected,
+      detectedBranch: detectedBranch,
+      nearestBranch: nearestBranch,
+      nearestBranchDistanceMeters: nearestBranchDistanceMeters,
+      latitude: currentLat,
+      longitude: currentLng,
     );
-    return dist <= branch.radiusMeters;
+  }
+
+  void _throwIfLocationBlocked(AttendanceLocationSnapshot snapshot) {
+    if (!snapshot.locationServiceEnabled) {
+      throw StateError('Please turn on location services before recording attendance.');
+    }
+    if (!snapshot.locationPermissionGranted) {
+      throw StateError('Location permission is required to record attendance.');
+    }
+    if (snapshot.mockLocationDetected) {
+      throw StateError('Mock location was detected. Please disable fake GPS before recording attendance.');
+    }
+  }
+
+  AttendanceWorkMode _resolveWorkMode(
+    AttendanceLocationSnapshot snapshot,
+    AttendanceWorkMode? overrideMode,
+  ) {
+    if (snapshot.detectedBranch != null) return AttendanceWorkMode.office;
+    if (overrideMode != null) return overrideMode;
+    throw StateError('You are outside all registered branch areas. Choose WFA or Business Trip first.');
+  }
+
+  AttendanceWorkMode _resolveClockOutMode(AttendanceLocationSnapshot snapshot) {
+    if (snapshot.detectedBranch != null) return AttendanceWorkMode.office;
+    return AttendanceWorkMode.wfa;
   }
 
   double _distanceMeters(double lat1, double lon1, double lat2, double lon2) {
@@ -99,4 +248,30 @@ class AttendanceController extends ChangeNotifier {
   }
 
   double _toRad(double v) => v * pi / 180;
+}
+
+class AttendanceLocationSnapshot {
+  final bool locationServiceEnabled;
+  final bool locationPermissionGranted;
+  final bool mockLocationDetected;
+  final Branch? detectedBranch;
+  final Branch? nearestBranch;
+  final double? nearestBranchDistanceMeters;
+  final double? latitude;
+  final double? longitude;
+
+  const AttendanceLocationSnapshot({
+    required this.locationServiceEnabled,
+    required this.locationPermissionGranted,
+    required this.mockLocationDetected,
+    required this.detectedBranch,
+    required this.nearestBranch,
+    required this.nearestBranchDistanceMeters,
+    required this.latitude,
+    required this.longitude,
+  });
+}
+
+extension _FirstOrNull<T> on List<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

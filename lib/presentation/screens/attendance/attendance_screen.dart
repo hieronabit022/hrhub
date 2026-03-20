@@ -822,8 +822,8 @@ class _CorrectionFormScreenState extends State<CorrectionFormScreen> {
         reason: reason.text.trim(),
         checkInTime: checkInTime == null ? null : _serializePickedTime(checkInTime!),
         checkOutTime: checkOutTime == null ? null : _serializePickedTime(checkOutTime!),
-        location: useAutoGps
-            ? '${ctrl.currentLat.toStringAsFixed(6)}, ${ctrl.currentLng.toStringAsFixed(6)}'
+        location: useAutoGps && ctrl.currentLat != null && ctrl.currentLng != null
+            ? '${ctrl.currentLat!.toStringAsFixed(6)}, ${ctrl.currentLng!.toStringAsFixed(6)}'
             : null,
         attachmentName: selectedAttachment?.name,
         submittedTo: 'HR Department',

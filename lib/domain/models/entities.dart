@@ -6,6 +6,8 @@ enum RequestStatus { draft, submitted, approved, rejected, canceled }
 
 enum AttendanceType { checkIn, checkOut }
 
+enum AttendanceWorkMode { office, wfa, businessTrip }
+
 enum AttendanceCorrectionStatus { pending, approved, rejected }
 
 enum AttendanceCorrectionType { checkIn, checkOut, both }
@@ -61,12 +63,14 @@ class AttendanceRecord {
   final String employeeId;
   final DateTime timestamp;
   final AttendanceType type;
+  final AttendanceWorkMode? workMode;
 
   const AttendanceRecord({
     required this.id,
     required this.employeeId,
     required this.timestamp,
     required this.type,
+    this.workMode,
   });
 }
 

@@ -259,14 +259,19 @@ class SupabaseAttendanceRepository implements AttendanceRepository {
   SupabaseAttendanceRepository(this._client);
 
   @override
-  Future<AttendanceRecord> addRecord(String employeeId, AttendanceType type, DateTime timestamp) async {
+  Future<AttendanceRecord> addRecord(
+    String employeeId,
+    AttendanceType type,
+    DateTime timestamp,
+    AttendanceWorkMode workMode,
+  ) async {
     final id = 'att-${DateTime.now().millisecondsSinceEpoch}';
     final rows = await _client.post('attendance_records', {
       'id': id,
       'employee_id': employeeId,
       'timestamp': timestamp.toIso8601String(),
       'type': type.name,
-      'work_mode': null,
+      'work_mode': workMode.name,
     }) as List<dynamic>;
     return _toAttendanceRecord(rows.first as Map<String, dynamic>);
   }
@@ -322,6 +327,9 @@ class SupabaseAttendanceRepository implements AttendanceRepository {
       employeeId: row['employee_id'] as String,
       timestamp: DateTime.parse(row['timestamp'] as String),
       type: _attendanceTypeFromString(row['type'] as String),
+      workMode: row['work_mode'] == null
+          ? null
+          : _attendanceWorkModeFromString(row['work_mode'] as String),
     );
   }
 
@@ -831,6 +839,10 @@ RequestStatus _requestStatusFromString(String value) {
 
 AttendanceType _attendanceTypeFromString(String value) {
   return AttendanceType.values.firstWhere((e) => e.name == value);
+}
+
+AttendanceWorkMode _attendanceWorkModeFromString(String value) {
+  return AttendanceWorkMode.values.firstWhere((e) => e.name == value);
 }
 
 AttendanceCorrectionStatus _attendanceCorrectionStatusFromString(String value) {
