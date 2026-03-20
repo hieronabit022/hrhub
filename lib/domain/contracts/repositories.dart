@@ -11,6 +11,7 @@ abstract class AuthRepository {
 
 abstract class EmployeeRepository {
   Future<Employee> getCurrentEmployee();
+  Future<List<Employee>> listTeamMembers(Employee employee);
 }
 
 abstract class BranchRepository {
@@ -36,6 +37,7 @@ abstract class AttendanceRepository {
 abstract class RequestRepository {
   Future<List<HrRequest>> listByEmployee(String employeeId);
   Future<List<HrRequest>> listApprovals(String approverEmployeeId);
+  Future<List<HrRequest>> listTeamRequestsForApprover(String approverEmployeeId);
   Future<HrRequest> create(HrRequest request);
   Future<HrRequest> update(HrRequest request);
   Future<void> delete(String requestId);

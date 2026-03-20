@@ -8,6 +8,7 @@ import '../../../application/controllers/feed_controller.dart';
 import '../../../domain/models/entities.dart';
 import '../../widgets/action_dialogs.dart';
 import '../../widgets/employee_avatar.dart';
+import '../../widgets/feed_fake_image.dart';
 
 class FeedListScreen extends StatefulWidget {
   final FeedType type;
@@ -46,6 +47,9 @@ class _FeedListScreenState extends State<FeedListScreen> {
         separatorBuilder: (_, _) => const SizedBox(height: 6),
         itemBuilder: (_, i) {
           final item = list[i];
+          if (item.type != FeedType.lifeEvent) {
+            return _FeedEditorialCard(item: item);
+          }
           return InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: () => Navigator.push(
@@ -172,108 +176,157 @@ class _FeedDetailScreenState extends State<FeedDetailScreen> {
           body: ListView(
             padding: const EdgeInsets.only(bottom: 14),
             children: [
-              _DetailBanner(item: item),
-              const SizedBox(height: 8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
                 child: Card(
+                  clipBehavior: Clip.antiAlias,
                   child: Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.zero,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                          if (_isCondolence(item)) ...[
-                            _FeedTypeChip(
-                              label: 'Condolence',
-                              color: const Color(0xFFDC2626),
-                            ),
-                            const SizedBox(height: 10),
-                            _BereavedSummary(
-                              item: item,
-                              detailed: true,
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          Text(
-                            item.title,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                        if (item.type == FeedType.lifeEvent)
+                          _DetailBanner(item: item, embedded: true)
+                        else
+                          FeedFakeImage(
+                            item: item,
+                            height: 230,
+                            borderRadius: 18,
                           ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const CircleAvatar(radius: 12, child: Icon(Icons.person, size: 14)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                item.author,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                        if (_isCondolence(item)) ...[
+                          _FeedTypeChip(
+                            label: 'Condolence',
+                            color: const Color(0xFFDC2626),
+                          ),
+                          const SizedBox(height: 10),
+                          _BereavedSummary(
+                            item: item,
+                            detailed: true,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                              Text(
+                                item.title,
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
                                   color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                            ),
-                            Text(
-                              DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt),
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          item.content,
-                          style: TextStyle(
-                            fontSize: 12.2,
-                            height: 1.5,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            TextButton.icon(
-                              onPressed: () => feed.toggleLike(item.id),
-                              icon: Icon(
-                                isCondolence
-                                    ? (item.likedByEmployeeIds.contains(feed.employeeId)
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded)
-                                    : (item.likedByEmployeeIds.contains(feed.employeeId)
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_outline_rounded),
-                                size: 18,
-                              ),
-                              label: Text(
-                                isCondolence
-                                    ? 'Condolences (${item.likedByEmployeeIds.length})'
-                                    : '${item.likedByEmployeeIds.length}',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Row(
-                              children: [
-                                Icon(
-                                  isCondolence ? Icons.forum_outlined : Icons.mode_comment_outlined,
-                                  size: 17,
+                              const SizedBox(height: 6),
+                              if (item.type == FeedType.lifeEvent)
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item.relatedEmployeeName ?? 'Employee',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt),
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                      child: Icon(
+                                        item.type == FeedType.news
+                                            ? Icons.newspaper_rounded
+                                            : item.type == FeedType.announcement
+                                                ? Icons.campaign_rounded
+                                                : Icons.person,
+                                        size: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        item.author,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt),
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${item.comments.length}',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                              const SizedBox(height: 10),
+                              Text(
+                                item.content,
+                                style: TextStyle(
+                                  fontSize: 12.2,
+                                  height: 1.5,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () => feed.toggleLike(item.id),
+                                    icon: Icon(
+                                      isCondolence
+                                          ? (item.likedByEmployeeIds.contains(feed.employeeId)
+                                              ? Icons.favorite_rounded
+                                              : Icons.favorite_border_rounded)
+                                          : (item.likedByEmployeeIds.contains(feed.employeeId)
+                                              ? Icons.favorite_rounded
+                                              : Icons.favorite_outline_rounded),
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      isCondolence
+                                          ? 'Condolences (${item.likedByEmployeeIds.length})'
+                                          : '${item.likedByEmployeeIds.length}',
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                  const SizedBox(width: 10),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isCondolence ? Icons.forum_outlined : Icons.mode_comment_outlined,
+                                        size: 17,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${item.comments.length}',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -523,9 +576,98 @@ class _CoverThumb extends StatelessWidget {
   }
 }
 
+class _FeedEditorialCard extends StatelessWidget {
+  final FeedItem item;
+
+  const _FeedEditorialCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FeedDetailScreen(itemId: item.id)),
+      ),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item.content,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        _ListMeta(
+                          icon: Icons.schedule_rounded,
+                          label: DateFormat('dd MMM yyyy').format(item.createdAt),
+                        ),
+                        _ListMeta(
+                          icon: Icons.favorite_outline_rounded,
+                          label: '${item.likedByEmployeeIds.length}',
+                        ),
+                        _ListMeta(
+                          icon: Icons.mode_comment_outlined,
+                          label: '${item.comments.length}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              FeedFakeImage(
+                item: item,
+                compact: true,
+                width: 116,
+                height: 116,
+                borderRadius: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DetailBanner extends StatelessWidget {
   final FeedItem item;
-  const _DetailBanner({required this.item});
+  final bool embedded;
+
+  const _DetailBanner({
+    required this.item,
+    this.embedded = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -543,10 +685,10 @@ class _DetailBanner extends StatelessWidget {
                 : const [Color(0xFF7C3AED), Color(0xFFEC4899)];
     return Container(
       key: const Key('news_detail_banner'),
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      margin: embedded ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       height: 170,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(embedded ? 0 : 16),
         gradient: LinearGradient(
           colors: bannerColors,
           begin: Alignment.topLeft,
@@ -642,7 +784,14 @@ class _DetailBanner extends StatelessWidget {
                             ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(icon, color: Colors.white, size: 28),
+                                  EmployeeAvatar(
+                                    initials: item.relatedEmployeeInitials ??
+                                        ((item.relatedEmployeeName?.isNotEmpty ?? false)
+                                            ? item.relatedEmployeeName!.substring(0, 1).toUpperCase()
+                                            : 'E'),
+                                    avatarUrl: item.relatedEmployeeAvatarUrl,
+                                    radius: 20,
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
                                     (item.relatedEmployeeName ?? 'Employee').toUpperCase(),
@@ -658,7 +807,35 @@ class _DetailBanner extends StatelessWidget {
                                   ),
                                 ],
                               )
-                            : Icon(icon, color: Colors.white, size: 34),
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    EmployeeAvatar(
+                                      initials: item.relatedEmployeeInitials ??
+                                          ((item.relatedEmployeeName?.isNotEmpty ?? false)
+                                              ? item.relatedEmployeeName!.substring(0, 1).toUpperCase()
+                                              : 'E'),
+                                      avatarUrl: item.relatedEmployeeAvatarUrl,
+                                      radius: 20,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      child: Text(
+                                        (item.relatedEmployeeName ?? 'Employee').toUpperCase(),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.2,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                       ),
                     ],
                   ),
@@ -668,6 +845,38 @@ class _DetailBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ListMeta extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _ListMeta({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

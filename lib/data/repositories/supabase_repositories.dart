@@ -156,7 +156,7 @@ class SupabaseEmployeeRepository implements EmployeeRepository {
     final rows = await _client.get(
       'employees',
       query: {
-        'select': 'id,name,title,department,branch_id,initials,phone,avatar_url',
+        'select': 'id,name,title,department,branch_id,manager_id,initials,phone,avatar_url',
         'id': 'eq.$employeeId',
         'limit': '1',
       },
@@ -168,6 +168,59 @@ class SupabaseEmployeeRepository implements EmployeeRepository {
       title: row['title'] as String,
       department: row['department'] as String,
       branchId: row['branch_id'] as String,
+      managerId: row['manager_id'] as String?,
+      initials: row['initials'] as String,
+      phone: row['phone'] as String,
+      avatarUrl: row['avatar_url'] as String?,
+    );
+  }
+
+  @override
+  Future<List<Employee>> listTeamMembers(Employee employee) async {
+    List<dynamic> rows = const [];
+    if (employee.managerId != null && employee.managerId!.isNotEmpty) {
+      rows = await _client.get(
+        'employees',
+        query: {
+          'select': 'id,name,title,department,branch_id,manager_id,initials,phone,avatar_url',
+          'manager_id': 'eq.${employee.managerId}',
+          'id': 'neq.${employee.id}',
+          'order': 'name.asc',
+        },
+      ) as List<dynamic>;
+    }
+    if (rows.isEmpty) {
+      rows = await _client.get(
+        'employees',
+        query: {
+          'select': 'id,name,title,department,branch_id,manager_id,initials,phone,avatar_url',
+          'manager_id': 'eq.${employee.id}',
+          'order': 'name.asc',
+        },
+      ) as List<dynamic>;
+    }
+    if (rows.isEmpty) {
+      rows = await _client.get(
+        'employees',
+        query: {
+          'select': 'id,name,title,department,branch_id,manager_id,initials,phone,avatar_url',
+          'department': 'eq.${employee.department}',
+          'id': 'neq.${employee.id}',
+          'order': 'name.asc',
+        },
+      ) as List<dynamic>;
+    }
+    return rows.map((row) => _toEmployee(row as Map<String, dynamic>)).toList();
+  }
+
+  Employee _toEmployee(Map<String, dynamic> row) {
+    return Employee(
+      id: row['id'] as String,
+      name: row['name'] as String,
+      title: row['title'] as String,
+      department: row['department'] as String,
+      branchId: row['branch_id'] as String,
+      managerId: row['manager_id'] as String?,
       initials: row['initials'] as String,
       phone: row['phone'] as String,
       avatarUrl: row['avatar_url'] as String?,
@@ -338,7 +391,22 @@ class SupabaseRequestRepository implements RequestRepository {
         'order': 'created_at.desc',
       },
     ) as List<dynamic>;
-    return rows.map((row) => _toRequest(row as Map<String, dynamic>)).toList();
+    return _enrichRequests(rows);
+  }
+
+  @override
+  Future<List<HrRequest>> listTeamRequestsForApprover(String approverEmployeeId) async {
+    final rows = await _client.get(
+      'requests',
+      query: {
+        'select': '*',
+        'approver_employee_id': 'eq.$approverEmployeeId',
+        'status': 'in.(submitted,approved)',
+        'type': 'in.(leave,permission,wfa)',
+        'order': 'created_at.desc',
+      },
+    ) as List<dynamic>;
+    return _enrichRequests(rows);
   }
 
   @override
@@ -433,7 +501,38 @@ class SupabaseRequestRepository implements RequestRepository {
       createdAt: DateTime.parse(row['created_at'] as String),
       status: _requestStatusFromString(row['status'] as String),
       attachments: attachments,
+      requesterName: row['requester_name'] as String?,
+      requesterDepartment: row['requester_department'] as String?,
+      requesterInitials: row['requester_initials'] as String?,
+      requesterAvatarUrl: row['requester_avatar_url'] as String?,
     );
+  }
+
+  Future<List<HrRequest>> _enrichRequests(List<dynamic> rows) async {
+    final items = rows.map((row) => _toRequest(row as Map<String, dynamic>)).toList();
+    final employeeIds = items.map((item) => item.employeeId).toSet().toList();
+    if (employeeIds.isEmpty) return items;
+    final employeeRows = await _client.get(
+      'employees',
+      query: {
+        'select': 'id,name,department,initials,avatar_url',
+        'id': 'in.(${employeeIds.join(',')})',
+      },
+    ) as List<dynamic>;
+    final employeeMap = <String, Map<String, dynamic>>{
+      for (final row in employeeRows) (row as Map<String, dynamic>)['id'] as String: row,
+    };
+    return items
+        .map((item) {
+          final employee = employeeMap[item.employeeId];
+          return item.copyWith(
+            requesterName: employee?['name'] as String?,
+            requesterDepartment: employee?['department'] as String?,
+            requesterInitials: employee?['initials'] as String?,
+            requesterAvatarUrl: employee?['avatar_url'] as String?,
+          );
+        })
+        .toList();
   }
 }
 

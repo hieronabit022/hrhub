@@ -9,6 +9,7 @@ import 'application/controllers/notification_controller.dart';
 import 'application/controllers/profile_controller.dart';
 import 'application/controllers/request_controller.dart';
 import 'application/controllers/theme_controller.dart';
+import 'application/controllers/team_controller.dart';
 import 'data/repositories/supabase_repositories.dart';
 import 'presentation/app/workpulse_app.dart';
 
@@ -31,6 +32,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => ThemeController()),
         ChangeNotifierProvider(create: (_) => AuthController(authRepository)),
         ChangeNotifierProvider(create: (_) => AppController(employeeRepository)),
+        ChangeNotifierProvider(
+          create: (_) => TeamController(employeeRepository),
+        ),
         ChangeNotifierProvider(
           create: (_) => AttendanceController(
             attendanceRepository,

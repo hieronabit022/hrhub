@@ -19,6 +19,7 @@ import '../profile/profile_screen.dart';
 import '../requests/requests_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../widgets/employee_avatar.dart';
+import '../../widgets/feed_fake_image.dart';
 import '../../widgets/swipe_attendance_action.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -376,7 +377,7 @@ class _NewsAnnouncementSliderState extends State<_NewsAnnouncementSlider> {
   @override
   Widget build(BuildContext context) {
     final feed = context.watch<FeedController>();
-    final items = [...feed.news.take(1), ...feed.announcements.take(1)];
+    final items = [...feed.news.take(2), ...feed.announcements.take(2)];
 
     if (items.isEmpty) {
       return const SizedBox(
@@ -390,7 +391,7 @@ class _NewsAnnouncementSliderState extends State<_NewsAnnouncementSlider> {
     _startAutoSlide(items.length);
 
     return SizedBox(
-      height: 138,
+      height: 198,
       child: PageView(
         controller: _pageController,
         onPageChanged: (index) => _currentPage = index,
@@ -409,129 +410,132 @@ class _NewsAnnouncementSliderState extends State<_NewsAnnouncementSlider> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: item.type == FeedType.news
-                ? const [Color(0xFF2563EB), Color(0xFF7C3AED)]
-                : const [Color(0xFF0F766E), Color(0xFF14B8A6)],
-          ),
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        padding: const EdgeInsets.all(14),
-        child: Row(
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
           children: [
-            _BannerArtwork(item: item),
-            const SizedBox(width: 12),
-            Expanded(
+            Positioned.fill(
+              child: FeedFakeImage(
+                item: item,
+                borderRadius: 16,
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.16),
+                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.88),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    item.type == FeedType.news ? 'News Update' : 'Announcement',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 10.8,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        item.type == FeedType.news ? 'NEWS' : 'ANNOUNCEMENT',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.42),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Breaking News',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     item.title,
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      height: 1.08,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.content,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 11.2),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 14,
+                        color: Colors.black.withValues(alpha: 0.72),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('dd MMM yyyy').format(item.createdAt),
+                        style: TextStyle(
+                          fontSize: 10.8,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black.withValues(alpha: 0.72),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.mode_comment_outlined,
+                        size: 14,
+                        color: Colors.black.withValues(alpha: 0.72),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${item.comments.length}',
+                        style: TextStyle(
+                          fontSize: 10.8,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black.withValues(alpha: 0.72),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right_rounded, color: Colors.white),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BannerArtwork extends StatelessWidget {
-  final FeedItem item;
-
-  const _BannerArtwork({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = switch (item.type) {
-      FeedType.news => Icons.newspaper_rounded,
-      FeedType.announcement => Icons.campaign_rounded,
-      FeedType.lifeEvent => Icons.celebration_rounded,
-    };
-
-    return Container(
-      width: 76,
-      height: 96,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: Colors.white.withValues(alpha: 0.14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -10,
-            top: -8,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.12),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -14,
-            bottom: -18,
-            child: Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-          ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 28),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    (item.coverImage ?? item.type.name).toUpperCase(),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontSize: 9.2,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

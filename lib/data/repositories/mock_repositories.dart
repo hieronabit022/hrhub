@@ -92,11 +92,30 @@ class MockAuthRepository implements AuthRepository {
 
 class InMemoryEmployeeRepository implements EmployeeRepository {
   Employee currentEmployee;
+  final List<Employee> _employees;
 
-  InMemoryEmployeeRepository(this.currentEmployee);
+  InMemoryEmployeeRepository(this.currentEmployee, [List<Employee> employees = const []])
+      : _employees = employees.isEmpty ? [currentEmployee] : employees;
 
   @override
   Future<Employee> getCurrentEmployee() async => currentEmployee;
+
+  @override
+  Future<List<Employee>> listTeamMembers(Employee employee) async {
+    if (employee.managerId != null) {
+      final sameManager = _employees
+          .where((item) => item.id != employee.id && item.managerId == employee.managerId)
+          .toList();
+      if (sameManager.isNotEmpty) return sameManager;
+    }
+    final directReports = _employees
+        .where((item) => item.id != employee.id && item.managerId == employee.id)
+        .toList();
+    if (directReports.isNotEmpty) return directReports;
+    return _employees
+        .where((item) => item.id != employee.id && item.department == employee.department)
+        .toList();
+  }
 }
 
 class InMemoryBranchRepository implements BranchRepository {
@@ -200,6 +219,17 @@ class InMemoryRequestRepository implements RequestRepository {
         .where(
           (e) =>
               e.status == RequestStatus.submitted &&
+              (e.type == RequestType.leave || e.type == RequestType.permission || e.type == RequestType.wfa),
+        )
+        .toList();
+  }
+
+  @override
+  Future<List<HrRequest>> listTeamRequestsForApprover(String approverEmployeeId) async {
+    return _requests
+        .where(
+          (e) =>
+              (e.status == RequestStatus.submitted || e.status == RequestStatus.approved) &&
               (e.type == RequestType.leave || e.type == RequestType.permission || e.type == RequestType.wfa),
         )
         .toList();

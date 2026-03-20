@@ -13,6 +13,7 @@ class RequestController extends ChangeNotifier {
 
   List<HrRequest> requests = [];
   List<HrRequest> approvals = [];
+  List<HrRequest> teamApprovalContext = [];
   String employeeId = 'emp-1';
 
   Future<void> load([String? employee]) async {
@@ -24,6 +25,12 @@ class RequestController extends ChangeNotifier {
   Future<void> loadApprovals([String? employee]) async {
     if (employee != null) employeeId = employee;
     approvals = await _requestRepository.listApprovals(employeeId);
+    notifyListeners();
+  }
+
+  Future<void> loadTeamApprovalContext([String? employee]) async {
+    if (employee != null) employeeId = employee;
+    teamApprovalContext = await _requestRepository.listTeamRequestsForApprover(employeeId);
     notifyListeners();
   }
 
@@ -59,6 +66,7 @@ class RequestController extends ChangeNotifier {
     );
     await load();
     await loadApprovals();
+    await loadTeamApprovalContext();
   }
 
   Future<void> cancel(String id) async {
@@ -77,18 +85,21 @@ class RequestController extends ChangeNotifier {
     );
     await load();
     await loadApprovals();
+    await loadTeamApprovalContext();
   }
 
   Future<void> delete(String id) async {
     await _requestRepository.delete(id);
     await load();
     await loadApprovals();
+    await loadTeamApprovalContext();
   }
 
   Future<void> updateDraft(HrRequest request) async {
     await _requestRepository.update(request);
     await load();
     await loadApprovals();
+    await loadTeamApprovalContext();
   }
 
   Future<MedicalAttachment> uploadAttachment({
@@ -124,6 +135,7 @@ class RequestController extends ChangeNotifier {
     );
     await load();
     await loadApprovals();
+    await loadTeamApprovalContext();
   }
 
   Future<void> reject(String id, {String? notes}) async {
@@ -144,6 +156,7 @@ class RequestController extends ChangeNotifier {
     );
     await load();
     await loadApprovals();
+    await loadTeamApprovalContext();
   }
 
   List<MedicalAttachment> removeAttachment(

@@ -40,26 +40,33 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
     final textTheme = GoogleFonts.plusJakartaSansTextTheme();
 
     final lightScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF3B82F6),
+      seedColor: const Color(0xFFF2B31A),
       brightness: Brightness.light,
-      primary: const Color(0xFF2667FF),
-      secondary: const Color(0xFF7C3AED),
+      primary: const Color(0xFFF2B31A),
+      onPrimary: const Color(0xFF2F3449),
+      secondary: const Color(0xFF4A4F66),
+      onSecondary: Colors.white,
       surface: const Color(0xFFFFFFFF),
+      onSurface: const Color(0xFF404459),
+      onSurfaceVariant: const Color(0xFF7D8091),
+      outline: const Color(0xFFD8D9E3),
+      outlineVariant: const Color(0xFFE7E8EF),
+      surfaceContainerHighest: const Color(0xFFF1F0F7),
     );
 
-    final darkScheme = const ColorScheme(
+    final darkScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFFF2B31A),
       brightness: Brightness.dark,
-      primary: Color(0xFF8FB4FF),
-      onPrimary: Color(0xFF0D1B3A),
-      secondary: Color(0xFFCDB7FF),
-      onSecondary: Color(0xFF231942),
-      error: Color(0xFFFFB4AB),
-      onError: Color(0xFF690005),
-      surface: Color(0xFF121A2A),
-      onSurface: Color(0xFFEAF1FF),
-      outline: Color(0xFF3A4660),
-      surfaceContainerHighest: Color(0xFF1A2438),
-      onSurfaceVariant: Color(0xFFB7C4DF),
+      primary: const Color(0xFFF2B31A),
+      onPrimary: const Color(0xFF2A2E43),
+      secondary: const Color(0xFFAEB2C7),
+      onSecondary: const Color(0xFF2F3449),
+      surface: const Color(0xFF34384F),
+      onSurface: const Color(0xFFE7E5F1),
+      onSurfaceVariant: const Color(0xFFABAFC1),
+      outline: const Color(0xFF4A4E65),
+      outlineVariant: const Color(0xFF41455E),
+      surfaceContainerHighest: const Color(0xFF3A3E57),
     );
 
     ThemeData buildTheme(ColorScheme scheme, Brightness brightness) {
@@ -67,7 +74,9 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
         useMaterial3: true,
         brightness: brightness,
         colorScheme: scheme,
-        scaffoldBackgroundColor: brightness == Brightness.light ? const Color(0xFFF5F7FB) : const Color(0xFF0D1422),
+        scaffoldBackgroundColor: brightness == Brightness.light
+            ? const Color(0xFFF5F3F8)
+            : const Color(0xFF2C3147),
         textTheme: textTheme.copyWith(
           bodyLarge: textTheme.bodyLarge?.copyWith(
             fontSize: 13.2,
@@ -91,21 +100,21 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
           centerTitle: false,
           elevation: 0,
           backgroundColor: brightness == Brightness.dark
-              ? const Color(0xFF0D1422)
-              : const Color(0xFFF5F7FB),
+              ? const Color(0xFF2C3147)
+              : const Color(0xFFF5F3F8),
           surfaceTintColor: Colors.transparent,
           foregroundColor: scheme.onSurface,
           systemOverlayStyle: brightness == Brightness.dark
               ? SystemUiOverlayStyle.light.copyWith(
                   statusBarColor: Colors.transparent,
-                  systemNavigationBarColor: const Color(0xFF0D1422),
+                  systemNavigationBarColor: const Color(0xFF2C3147),
                   systemNavigationBarIconBrightness: Brightness.light,
                 )
               : SystemUiOverlayStyle.dark.copyWith(
                   statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.dark,
                   statusBarBrightness: Brightness.light,
-                  systemNavigationBarColor: const Color(0xFFF5F7FB),
+                  systemNavigationBarColor: const Color(0xFFF5F3F8),
                   systemNavigationBarIconBrightness: Brightness.dark,
                 ),
           titleTextStyle: textTheme.titleMedium?.copyWith(
@@ -116,23 +125,29 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
         ),
         cardTheme: CardThemeData(
           elevation: brightness == Brightness.light ? 1.4 : 0,
-          color: brightness == Brightness.light ? Colors.white : const Color(0xFF121A2A),
+          color: brightness == Brightness.light ? Colors.white : const Color(0xFF34384F),
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(
-              color: brightness == Brightness.light ? const Color(0xFFE7EAF2) : const Color(0xFF2D3952),
+              color: brightness == Brightness.light
+                  ? const Color(0xFFE7E8EF)
+                  : const Color(0xFF4A4E65),
             ),
           ),
           margin: EdgeInsets.zero,
         ),
         dialogTheme: DialogThemeData(
-          backgroundColor: brightness == Brightness.light ? Colors.white : const Color(0xFF151E31),
+          backgroundColor: brightness == Brightness.light
+              ? Colors.white
+              : const Color(0xFF34384F),
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
             side: BorderSide(
-              color: brightness == Brightness.light ? const Color(0xFFE7EAF2) : const Color(0xFF2D3952),
+              color: brightness == Brightness.light
+                  ? const Color(0xFFE7E8EF)
+                  : const Color(0xFF4A4E65),
             ),
           ),
           titleTextStyle: textTheme.titleMedium?.copyWith(
@@ -149,7 +164,9 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
         inputDecorationTheme: InputDecorationTheme(
           isDense: true,
           filled: true,
-          fillColor: brightness == Brightness.light ? Colors.white : const Color(0xFF1A2438),
+          fillColor: brightness == Brightness.light
+              ? Colors.white
+              : const Color(0xFF3A3E57),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           hintStyle: TextStyle(
             fontSize: 11.8,
@@ -182,7 +199,7 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
           style: FilledButton.styleFrom(
             elevation: 0,
             backgroundColor: scheme.primary,
-            foregroundColor: brightness == Brightness.dark ? const Color(0xFF0D1B3A) : Colors.white,
+            foregroundColor: const Color(0xFF2F3449),
             textStyle: const TextStyle(fontSize: 12.2, fontWeight: FontWeight.w700),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -208,8 +225,8 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
           surfaceTintColor: Colors.transparent,
           shadowColor: Colors.transparent,
           indicatorColor: brightness == Brightness.light
-              ? const Color(0xFFE8EEFF)
-              : const Color(0xFF202C46),
+              ? const Color(0xFFFFE5A6)
+              : const Color(0xFF42465D),
           labelTextStyle: WidgetStateProperty.resolveWith(
             (states) => TextStyle(
               fontSize: 11,
@@ -237,12 +254,12 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
     final overlayStyle = isDark
         ? SystemUiOverlayStyle.light.copyWith(
             statusBarColor: Colors.transparent,
-            systemNavigationBarColor: const Color(0xFF0D1422),
+            systemNavigationBarColor: const Color(0xFF2C3147),
             systemNavigationBarIconBrightness: Brightness.light,
           )
         : SystemUiOverlayStyle.dark.copyWith(
             statusBarColor: Colors.transparent,
-            systemNavigationBarColor: const Color(0xFFF5F7FB),
+            systemNavigationBarColor: const Color(0xFFF5F3F8),
             systemNavigationBarIconBrightness: Brightness.dark,
           );
 

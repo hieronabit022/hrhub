@@ -22,6 +22,7 @@ class Employee {
   final String title;
   final String department;
   final String branchId;
+  final String? managerId;
   final String initials;
   final String phone;
   final String? avatarUrl;
@@ -32,6 +33,7 @@ class Employee {
     required this.title,
     required this.department,
     required this.branchId,
+    this.managerId,
     required this.initials,
     required this.phone,
     this.avatarUrl,
@@ -131,6 +133,10 @@ class HrRequest {
   final DateTime createdAt;
   final RequestStatus status;
   final List<MedicalAttachment> attachments;
+  final String? requesterName;
+  final String? requesterDepartment;
+  final String? requesterInitials;
+  final String? requesterAvatarUrl;
 
   const HrRequest({
     required this.id,
@@ -142,6 +148,10 @@ class HrRequest {
     required this.createdAt,
     required this.status,
     this.attachments = const [],
+    this.requesterName,
+    this.requesterDepartment,
+    this.requesterInitials,
+    this.requesterAvatarUrl,
   });
 
   HrRequest copyWith({
@@ -150,6 +160,10 @@ class HrRequest {
     RequestStatus? status,
     LeaveCategory? leaveCategory,
     List<MedicalAttachment>? attachments,
+    String? requesterName,
+    String? requesterDepartment,
+    String? requesterInitials,
+    String? requesterAvatarUrl,
   }) {
     return HrRequest(
       id: id,
@@ -161,6 +175,10 @@ class HrRequest {
       createdAt: createdAt,
       status: status ?? this.status,
       attachments: attachments ?? this.attachments,
+      requesterName: requesterName ?? this.requesterName,
+      requesterDepartment: requesterDepartment ?? this.requesterDepartment,
+      requesterInitials: requesterInitials ?? this.requesterInitials,
+      requesterAvatarUrl: requesterAvatarUrl ?? this.requesterAvatarUrl,
     );
   }
 }

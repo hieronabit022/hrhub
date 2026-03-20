@@ -11,6 +11,7 @@ import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';
 import '../requests/requests_screen.dart';
 import '../settings/settings_screen.dart';
+import '../team/team_members_screen.dart';
 
 class AllMenuScreen extends StatelessWidget {
   const AllMenuScreen({super.key});
@@ -24,8 +25,10 @@ class AllMenuScreen extends StatelessWidget {
       _MenuItem('My Profile', Icons.person_outline, const ProfileScreen()),
       _MenuItem('Correction', Icons.edit_calendar_outlined, const AttendanceScreen(initialTab: 2)),
       _MenuItem('Attendance', Icons.fingerprint, const AttendanceScreen()),
+      _MenuItem('Team Members', Icons.groups_outlined, const TeamMembersScreen()),
       _MenuItem('News', Icons.newspaper_outlined, const FeedListScreen.news()),
       _MenuItem('Announcements', Icons.campaign_outlined, const FeedListScreen.announcements()),
+      _MenuItem('Life Events', Icons.celebration_outlined, const FeedListScreen.lifeEvents()),
       _MenuItem('Medical Claim', Icons.health_and_safety_outlined, const RequestsScreen.medicalClaims()),
       _MenuItem('Settings', Icons.settings_outlined, const SettingsScreen()),
       _MenuItem('Notifications', Icons.notifications_none, const NotificationsScreen()),

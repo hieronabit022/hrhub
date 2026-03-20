@@ -86,8 +86,8 @@ class _SwipeAttendanceActionState extends State<SwipeAttendanceAction> {
   @override
   Widget build(BuildContext context) {
     final baseGradient = widget.checkedIn
-        ? const [Color(0xFF0F172A), Color(0xFF2563EB)]
-        : const [Color(0xFF1D4ED8), Color(0xFF38BDF8)];
+        ? const [Color(0xFF2C3147), Color(0xFF4A4F66)]
+        : const [Color(0xFF4A4F66), Color(0xFFF2B31A)];
 
     return LayoutBuilder(
       builder: (context, constraints) {
